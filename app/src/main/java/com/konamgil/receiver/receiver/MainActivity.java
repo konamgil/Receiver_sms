@@ -12,6 +12,8 @@ import android.os.Vibrator;
 import android.support.v7.app.NotificationCompat;
 import android.telephony.SmsMessage;
 import android.util.Log;
+import android.widget.RemoteViews;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -152,14 +154,24 @@ public class MainActivity extends BroadcastReceiver {
      * @param context
      */
     public void infoNnotify(Context context, String origNumber, int count, int TimeCount, String TimeKinds, int RepeatCount, String infoMessage) {
+
+        //커스텀 노티피케이션
+        RemoteViews customView = new RemoteViews(context.getPackageName(), R.layout.customnotiview);//커스텀 레이아웃
+        customView.setImageViewResource(R.id.ivImage, R.drawable.smile);
+        customView.setTextViewText(R.id.tvTitle, "번호 : " + origNumber);
+        customView.setTextViewText(R.id.tvCount, String.valueOf(count));
+        customView.setTextViewText(R.id.contents,infoMessage);
+
+        //커스텀 노티피케이션 end
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
         builder.setContentTitle(infoMessage)
                 .setContentText(count + "")
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher))
                 .setAutoCancel(true)
                 .setWhen(System.currentTimeMillis())
-                .setDefaults(Notification.DEFAULT_ALL);
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setLights(0xff00ff00, 500, 500)
+                .setContent(customView);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             builder.setCategory(Notification.CATEGORY_MESSAGE)
