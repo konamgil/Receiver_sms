@@ -27,6 +27,7 @@ public class MainActivity extends BroadcastReceiver {
     private String TimeKinds;
     private int RepeatCount;
     private String infoMessage;
+    private int count = 1;
 
     @Override
     public void onReceive(final Context context, Intent intent) {
@@ -47,15 +48,15 @@ public class MainActivity extends BroadcastReceiver {
             }
 //            받은 메시지 번호
             final String origNumber = smsMessage[0].getOriginatingAddress();
-            String Message = smsMessage[0].getMessageBody().toString();
+//            String Message = smsMessage[0].getMessageBody().toString();
 
             //장문일경우 내용 받아오기
             for (SmsMessage message : smsMessage) {
                 info += message.getMessageBody().toString();
             }
-            Toast.makeText(context, info + " " + origNumber, Toast.LENGTH_SHORT).show();
+            Toast.makeText(context,info, Toast.LENGTH_SHORT).show();
             mXmlHelper = new XmlHelper();
-            infoItem =  mXmlHelper.getParsedData(info);
+            infoItem = mXmlHelper.getParsedData(info);
 
             TimeCount = infoItem.get(0).getTimeCount();
             TimeKinds = infoItem.get(0).getTimeKinds();
@@ -64,40 +65,9 @@ public class MainActivity extends BroadcastReceiver {
 
             //notification 쓰레드로 실행
             Thread notiThread = new Thread() {
-                int count = 1;
                 @Override
                 public void run() {
-
-                    final Timer timer;
-                    TimerTask timerTask;
-                    //true면 한번만 실행
-//                    timer = new Timer(true);
-                    timer = new Timer();
-                    timerTask = new TimerTask() {
-                        @Override
-                        public void run() {
-                            try {
-                                infoNnotify(context, origNumber, count, TimeCount, TimeKinds, RepeatCount ,infoMessage);
-                                vibe(context);
-                                int repeatTime = divTimeKinds(TimeKinds);
-                                Thread.sleep(TimeCount * repeatTime);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            if (count == RepeatCount) {
-                                timer.cancel();
-                            }
-                            count++;
-                        }
-
-                        @Override
-                        public boolean cancel() {
-                            Log.v("", "타이머 종료");
-                            return super.cancel();
-                        }
-                    };
-                    timer.schedule(timerTask, 0, 1000);
-
+                    notiTimerTask(context, origNumber, TimeCount, TimeKinds, RepeatCount, infoMessage);
                 }
             };
             notiThread.start();
@@ -105,17 +75,66 @@ public class MainActivity extends BroadcastReceiver {
     }
 
     /**
+     * info 정보를 분석하여 noti를 발생시킵니다
+     *
+     * @param context
+     * @param origNumber
+     * @param TimeCount
+     * @param TimeKinds
+     * @param RepeatCount
+     * @param infoMessage
+     */
+    private void notiTimerTask(final Context context, final String origNumber, final int TimeCount,
+                               final String TimeKinds, final int RepeatCount, final String infoMessage) {
+        final Timer timer;
+        TimerTask timerTask;
+        timer = new Timer();
+        timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    //반복시간
+                    int repeatTime = divTimeKinds(TimeKinds);
+                    Thread.sleep(TimeCount * repeatTime);
+
+                    //noti를 발생시킨다
+                    infoNnotify(context, origNumber, count, TimeCount, TimeKinds, RepeatCount, infoMessage);
+
+                    //진동을 발생시킨다
+                    vibe(context);
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (count == RepeatCount) {
+                    timer.cancel();
+                }
+                count++;
+            }
+
+            @Override
+            public boolean cancel() {
+                Log.v("", "타이머 종료");
+                return super.cancel();
+            }
+        };
+        timer.schedule(timerTask, 0, 1000);
+
+    }
+
+    /**
      * TimeKinds 에 따른 시간계산 메서드
+     *
      * @param TimeKinds
      * @return
      */
-    public int divTimeKinds(String TimeKinds){
+    private int divTimeKinds(String TimeKinds) {
         int kind = 0;
-        switch (TimeKinds.toLowerCase()){
+        switch (TimeKinds.toLowerCase()) {
             case "s":
                 kind = 1000;
                 break;
-            case "m" :
+            case "m":
                 kind = 1000 * 60;
                 break;
             case "h":
@@ -132,9 +151,8 @@ public class MainActivity extends BroadcastReceiver {
      *
      * @param context
      */
-    public void infoNnotify(Context context, String origNumber, int count, int TimeCount, String TimeKinds, int RepeatCount ,String infoMessage) {
+    public void infoNnotify(Context context, String origNumber, int count, int TimeCount, String TimeKinds, int RepeatCount, String infoMessage) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
-
         builder.setContentTitle(infoMessage)
                 .setContentText(count + "")
                 .setSmallIcon(R.mipmap.ic_launcher)
@@ -152,8 +170,9 @@ public class MainActivity extends BroadcastReceiver {
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         nm.notify(1234, builder.build());
     }
+
     //진동
-    public void vibe(Context context){
+    public void vibe(Context context) {
         vide = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         vide.vibrate(1000);
     }

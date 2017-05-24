@@ -11,24 +11,29 @@ import java.util.ArrayList;
 
 /**
  * Created by konamgil on 2017-05-24.
+ * 문자내용 xml 파싱
  */
 
 public class XmlHelper {
     private String text;
 
-    public XmlHelper() {;}
+    public XmlHelper() {
+        ;
+    }
 
     /**
      * 파싱된 arraylist 객체를 반환합니다
+     *
      * @param xmldata
      * @return
      */
-    public ArrayList getParsedData(String xmldata){
+    public ArrayList getParsedData(String xmldata) {
         return xmlParser(xmldata);
     }
 
     /**
      * String xml 형식의 문자열을 info 객체로 만들어줍니다
+     *
      * @param xmldata
      * @return
      */
@@ -49,43 +54,41 @@ public class XmlHelper {
             int eventType = parser.getEventType();
             info item = null;
 
-            while(eventType != XmlPullParser.END_DOCUMENT) {
+            while (eventType != XmlPullParser.END_DOCUMENT) {
                 String startTag = parser.getName();
                 switch (eventType) {
                     case XmlPullParser.START_TAG:
 
-                        if(startTag.equalsIgnoreCase("SMS")) {
+                        if (startTag.equalsIgnoreCase("SMS")) {
                             item = new info();
                         }
-                        if (startTag.equalsIgnoreCase("TimeCount")){
+                        if (startTag.equalsIgnoreCase("TimeCount")) {
                             item.setTimeCount(Integer.parseInt(parser.nextText()));
                         }
-                        if(startTag.equalsIgnoreCase("TimeKinds")) {
+                        if (startTag.equalsIgnoreCase("TimeKinds")) {
                             item.setTimeKinds(parser.nextText());
                         }
-                        if(startTag.equalsIgnoreCase("RepeatCount")) {
+                        if (startTag.equalsIgnoreCase("RepeatCount")) {
                             item.setRepeatCount(Integer.parseInt(parser.nextText()));
                         }
-                        if(startTag.equalsIgnoreCase("Message")) {
+                        if (startTag.equalsIgnoreCase("Message")) {
                             item.setMessage(parser.nextText());
                         }
-
                         break;
                     case XmlPullParser.END_TAG:
 
                         String endTag = parser.getName();
-                        if(endTag.equals("SMS")) {
+                        if (endTag.equals("SMS")) {
                             arrayList.add(item);
                         }
                         break;
                     case XmlPullParser.TEXT:
                         text = parser.getText();
                         break;
-
                 }
                 eventType = parser.next();
             }
-        }catch(XmlPullParserException e) {
+        } catch (XmlPullParserException e) {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
